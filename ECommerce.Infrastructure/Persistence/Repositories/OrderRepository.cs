@@ -6,7 +6,7 @@ namespace ECommerce.Infrastructure.Persistence.Repositories;
 
 public sealed class OrderRepository(AppDbContext db) : IOrderRepository
 {
-    public async Task<Order?> GetByIdAsync(Guid id, CancellationToken ct) =>
+    public async Task<Order?> GetByIdAsync(string id, CancellationToken ct) =>
         await db.Orders
                 .Include("_items")
                 .FirstOrDefaultAsync(o => o.Id == id, ct);

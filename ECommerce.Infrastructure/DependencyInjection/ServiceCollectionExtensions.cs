@@ -1,9 +1,7 @@
 ﻿using ECommerce.Application.Abstractions;
 using ECommerce.Infrastructure.Config;
 using ECommerce.Infrastructure.Http;
-using ECommerce.Infrastructure.Persistence;
 using ECommerce.Infrastructure.Persistence.Repositories;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
@@ -20,13 +18,12 @@ public static class ServiceCollectionExtensions
         // Options
         var opt = new BalanceApiOptions();
         config.GetSection(BalanceApiOptions.SectionName).Bind(opt);
-
         services.AddSingleton(opt);
 
-        // EF Core InMemory
-        services.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase("ECommercePaymentDb"));
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IOrderRepository, OrderRepository>();
+        // 🔹 Memory cache (DB yok)
+        services.AddMemoryCache();
+        services.AddScoped<IOrderRepository, OrderMemoryRepository>();
+        services.AddScoped<IUnitOfWork, NoopUnitOfWork>();
         services.AddScoped<IProductRepository, ProductRepository>();
 
         // Polly policies

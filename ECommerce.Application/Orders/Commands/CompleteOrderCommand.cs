@@ -7,4 +7,4 @@ namespace ECommerce.Application.Orders.Commands;
 /// <summary>
 /// Preorder alınmış siparişi tamamlar ve Balance API "complete" çağrısı yapar.
 /// </summary>
-public sealed record CompleteOrderCommand(Guid OrderId) : IRequest<Result<OrderDto>>;
+public sealed record CompleteOrderCommand(string OrderId) : IRequest<Result<OrderDto>>;

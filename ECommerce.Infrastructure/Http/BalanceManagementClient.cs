@@ -15,38 +15,38 @@ public sealed class BalanceManagementClient(HttpClient http) : IBalanceManagemen
 
     public async Task<GetProductsResponse> GetProductsAsync(CancellationToken ct)
     {
-        // GET /api/products
         using var resp = await http.GetAsync("/api/products", ct);
         await EnsureSuccess(resp, ct);
 
-        var payload = await resp.Content.ReadFromJsonAsync<BalanceProduct[]>(JsonOpts, ct) ?? [];
+        var payload = await resp.Content.ReadFromJsonAsync<GetProductsResponse>(JsonOpts, ct)
+                      ?? new GetProductsResponse(false, []);
 
-        return new GetProductsResponse(payload);
+        return payload;
     }
 
     public async Task<PreorderResponse> PreorderAsync(PreorderRequest request, CancellationToken ct)
     {
-        // POST /api/balance/preorder
         using var resp = await http.PostAsJsonAsync("/api/balance/preorder", request, JsonOpts, ct);
-        // Bu API 4xx/5xx dönse bile body’de anlamlı mesaj olabilir; önce body’yi dene
+
+        // 400'de de anlamlı gövde geliyor olabilir
         if (!resp.IsSuccessStatusCode && resp.StatusCode != HttpStatusCode.BadRequest)
             await EnsureSuccess(resp, ct);
 
         var payload = await resp.Content.ReadFromJsonAsync<PreorderResponse>(JsonOpts, ct)
-                      ?? new PreorderResponse("error", -1, "Empty response");
+                      ?? new PreorderResponse(false, "Empty response", null);
 
         return payload;
     }
 
     public async Task<CompleteResponse> CompleteAsync(CompleteRequest request, CancellationToken ct)
     {
-        // POST /api/balance/complete
         using var resp = await http.PostAsJsonAsync("/api/balance/complete", request, JsonOpts, ct);
+
         if (!resp.IsSuccessStatusCode && resp.StatusCode != HttpStatusCode.BadRequest)
             await EnsureSuccess(resp, ct);
 
         var payload = await resp.Content.ReadFromJsonAsync<CompleteResponse>(JsonOpts, ct)
-                      ?? new CompleteResponse("error", -1, "Empty response");
+                      ?? new CompleteResponse(false, "Empty response", null);
 
         return payload;
     }
@@ -54,9 +54,7 @@ public sealed class BalanceManagementClient(HttpClient http) : IBalanceManagemen
     private static async Task EnsureSuccess(HttpResponseMessage resp, CancellationToken ct)
     {
         if (resp.IsSuccessStatusCode) return;
-
-        var body = resp.Content is null ? string.Empty : await resp.Content.ReadAsStringAsync(ct);
-        throw new HttpRequestException(
-            $"Balance API error: {(int)resp.StatusCode} {resp.ReasonPhrase}. Body: {body}");
+        var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
+        throw new HttpRequestException($"Balance API error: {(int)resp.StatusCode} {resp.ReasonPhrase}. Body: {body}");
     }
 }

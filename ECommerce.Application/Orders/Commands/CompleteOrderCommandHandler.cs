@@ -15,17 +15,14 @@ public sealed class CompleteOrderCommandHandler(IOrderRepository orders, IUnitOf
         if (order is null)
             return Result<OrderDto>.Failure(Error.NotFound);
 
-        var total = order.Items.Sum(i => i.UnitPrice.Amount * i.Quantity);
-        var currency = order.Items.First().UnitPrice.Currency;
-        var orderRef = order.Id.ToString("N");
+        var orderRef = order.Id;
 
         var complete = await balanceClient.CompleteAsync(
-            new CompleteRequest(orderRef, total, currency), ct);
+            new CompleteRequest(OrderId: orderRef), ct);
 
-        if (!string.Equals(complete.Status, "ok", StringComparison.OrdinalIgnoreCase))
+        if (!complete.Success)
         {
-            var err = Error.External(complete.ErrorCode,
-                                     complete.ErrorMessage ?? "Tamamlama başarısız.");
+            var err = Error.External(-1, complete.Message ?? "Tamamlama başarısız.");
             return Result<OrderDto>.Failure(err);
         }
 

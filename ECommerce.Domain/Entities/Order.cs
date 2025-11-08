@@ -4,7 +4,7 @@ namespace ECommerce.Domain.Entities;
 
 public sealed class Order
 {
-    public Guid Id { get; }
+    public string Id { get; }
     public DateTime CreatedAt { get; private set; }
     public int Status { get; private set; } = 0;
 
@@ -14,7 +14,7 @@ public sealed class Order
 
     private Order() { } // EF
 
-    public Order(Guid id)
+    public Order(string id)
     {
         Id = id;
         CreatedAt = DateTime.UtcNow;

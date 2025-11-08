@@ -9,11 +9,12 @@ public sealed class GetProductsQueryHandler(IBalanceManagementClient balanceClie
 {
     public async Task<Result<IReadOnlyList<ProductDto>>> Handle(GetProductsQuery request, CancellationToken ct)
     {
-        // Dış servisten ürünleri al
         var resp = await balanceClient.GetProductsAsync(ct);
+        if (!resp.Success || resp.Data is null)
+            return Result<IReadOnlyList<ProductDto>>.Failure(Error.External(-1, "Ürünler getirilemedi."));
 
-        var result = resp.Products
-            .Select(p => new ProductDto(Guid.Parse(p.Id), p.Name, p.Price, p.Currency))
+        var result = resp.Data
+            .Select(p => new ProductDto(p.Id, p.Name, p.Description, p.Price, p.Currency, p.Category, p.Stock))
             .ToList()
             .AsReadOnly();
 

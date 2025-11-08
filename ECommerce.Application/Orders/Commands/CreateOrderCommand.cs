@@ -9,4 +9,4 @@ namespace ECommerce.Application.Orders.Commands;
 /// </summary>
 public sealed record CreateOrderCommand(IReadOnlyList<OrderItemInput> Items, string Currency) : IRequest<Result<OrderDto>>;
 
-public sealed record OrderItemInput(Guid ProductId, int Quantity, decimal UnitPrice);
+public sealed record OrderItemInput(string ProductId, int Quantity, decimal UnitPrice);

@@ -13,8 +13,7 @@ public sealed class CreateOrderCommandHandler(IOrderRepository orders, IUnitOfWo
 {
     public async Task<Result<OrderDto>> Handle(CreateOrderCommand request, CancellationToken ct)
     {
-        // 1) Domain sipariş oluştur
-        var order = new Order(Guid.NewGuid());
+        var order = new Order(Guid.NewGuid().ToString("N"));
 
         foreach (var it in request.Items)
         {
@@ -23,21 +22,18 @@ public sealed class CreateOrderCommandHandler(IOrderRepository orders, IUnitOfWo
             order.AddItem(item);
         }
 
-        // 2) Preorder çağrısı (rezerv)
         var total = order.Items.Sum(i => i.UnitPrice.Amount * i.Quantity);
-        var orderRef = order.Id.ToString("N");
+        var orderRef = order.Id;
 
         var preResp = await balanceClient.PreorderAsync(
-            new PreorderRequest(orderRef, total, request.Currency), ct);
+            new PreorderRequest(OrderId: orderRef, Amount: total), ct);
 
-        if (!string.Equals(preResp.Status, "ok", StringComparison.OrdinalIgnoreCase))
+        if (!preResp.Success)
         {
-            var err = Error.External(preResp.ErrorCode,
-                                     preResp.ErrorMessage ?? "İşlem başarısız.");
+            var err = Error.External(-1, preResp.Message ?? "İşlem başarısız.");
             return Result<OrderDto>.Failure(err);
         }
 
-        // 3) Persist et
         await orders.AddAsync(order, ct);
         await uow.SaveChangesAsync(ct);
 
